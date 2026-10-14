@@ -1,0 +1,15 @@
+# Archivos del sistema y entorno
+.DS_Store
+Thumbs.db
+node_modules/
+
+# Documentos internos de estudio, presentaciones y guías personales
+PRESENTACION.md
+*.pdf
+guias/
+repaso/
+scratch/
+notas/
+
+# Evitar duplicidad de la subcarpeta local
+SimuladorAutomatas/

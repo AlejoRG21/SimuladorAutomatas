@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador Gráfico de Autómatas Finitos - Teoría de la Computación</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <h1>Simulador Gráfico de Autómatas Finitos</h1>
+        <div class="subtitle">Parcial del Segundo Corte · Teoría de la Computación · 100% Offline</div>
+        <div class="authors">César Alejandro Rivera Garzón & Salomón Montilla Luna</div>
+    </header>
+
+    <nav class="tabs">
+        <button class="tab active" onclick="cambiarTab(0)">Módulo 1: AFND a AFD</button>
+        <button class="tab" onclick="cambiarTab(1)">Módulo 2: Autómata a ER</button>
+        <button class="tab" onclick="cambiarTab(2)">Verificador de Equivalencia</button>
+        <button class="tab" onclick="cambiarTab(3)">Pruebas Automáticas</button>
+        <button class="tab tab-guia" onclick="cambiarTab(4)">💡 Guion para Sustentar</button>
+    </nav>
+
+    <main class="container">
+
+        <!-- ======================================================== -->
+        <!-- MÓDULO 1: AFND A AFD (SUBCONJUNTOS, POZO Y EPSILON BONUS) -->
+        <!-- ======================================================== -->
+        <section class="panel active" id="panel-0">
+            <div class="panel-header">
+                <div>
+                    <h2>Módulo 1: Conversión de AFND a AFD (Método de Subconjuntos)</h2>
+                    <p class="panel-desc">Transforma un autómata con indecisiones (no determinista) en uno con caminos claros y únicos (determinista).</p>
+                </div>
+                <span class="badge-bonus">Bonus Clausura-ε (+5 pts)</span>
+            </div>
+
+            <!-- Caja didáctica / Traductor a lenguaje sencillo -->
+            <div class="callout-didactico">
+                <div class="callout-title">💡 ¿Qué estamos haciendo aquí en palabras sencillas?</div>
+                <p>Un <strong>AFND</strong> es como un personaje que puede clonarse y tomar dos caminos al tiempo con la misma letra. Como a la computadora no le gusta la indecisión, usamos el <strong>Método de Subconjuntos</strong>: en vez de tener clones separados, creamos "equipos" (ejemplo: el estado <code>{q0, q1}</code>). Si con una letra no hay a dónde ir, caemos al <strong>Estado Pozo (∅)</strong> (un callejón sin salida de rechazo).</p>
+            </div>
+            
+            <div class="presets-bar">
+                <label><strong>Cargar Caso Rápido:</strong></label>
+                <button class="btn-preset" onclick="cargarPresetM1('caso1_anexoA'); ejecutarModulo1Completo();">Caso 1 (Anexo A - Examen)</button>
+                <button class="btn-preset" onclick="cargarPresetM1('caso_bonus_epsilon'); ejecutarModulo1Completo();">Caso Bonus ε (Teletransporte gratis)</button>
+            </div>
+
+            <div class="card">
+                <h3>1. Parámetros del Autómata</h3>
+                <div class="grid-inputs">
+                    <div>
+                        <label>Estados:</label>
+                        <input type="text" id="m1-estados" value="q0, q1, q2" onchange="aplicarInputsM1()">
+                    </div>
+                    <div>
+                        <label>Alfabeto:</label>
+                        <input type="text" id="m1-alfabeto" value="a, b" onchange="aplicarInputsM1()">
+                    </div>
+                    <div>
+                        <label>Estado Inicial:</label>
+                        <input type="text" id="m1-inicial" value="q0" onchange="aplicarInputsM1()">
+                    </div>
+                    <div>
+                        <label>Estados Finales (Aceptación):</label>
+                        <input type="text" id="m1-finales" value="q2" onchange="aplicarInputsM1()">
+                    </div>
+                </div>
+
+                <h3>2. Matriz de Transiciones (¿A dónde va cada flecha?):</h3>
+                <p class="help-text">Escribe a dónde va cada estado con cada letra. Si no va a ninguna parte, déjalo vacío (el sistema creará el estado pozo ∅ automáticamente).</p>
+                <div id="m1-transiciones-editor"></div>
+                
+                <div class="actions-row">
+                    <button class="action-btn" onclick="ejecutarModulo1Completo()">⚡ Convertir a AFD</button>
+                    <button class="action-btn btn-secondary" onclick="anteriorPasoM1()">◀ Paso Anterior</button>
+                    <button class="action-btn btn-secondary" onclick="siguientePasoM1()">Paso Siguiente ▶</button>
+                    <button class="action-btn btn-success" id="m1-btn-transferir" style="display: none;" onclick="transferirAfdAModulo2()">➡️ Enviar este AFD al Módulo 2</button>
+                </div>
+
+                <!-- Visor interactivo del paso a paso -->
+                <div id="m1-paso-detalle" class="step-card"></div>
+            </div>
+
+            <!-- Gráficos Canvas en Paralelo -->
+            <div class="grid-canvas">
+                <div class="canvas-box">
+                    <h3>AFND Original (Entrada)</h3>
+                    <div class="legend">Círculos = Estados · Doble círculo = Final · Flecha izquierda = Inicial</div>
+                    <canvas id="canvasAFND" width="410" height="230"></canvas>
+                </div>
+                <div class="canvas-box">
+                    <h3>AFD Resultante (Sin Indecisión)</h3>
+                    <div class="legend">Cada círculo es un subconjunto de estados agrupados</div>
+                    <canvas id="canvasAFD" width="410" height="230"></canvas>
+                </div>
+            </div>
+
+            <h3>3. Tabla de Conversión y Estados Nuevos:</h3>
+            <div id="m1-tabla-visual"></div>
+
+            <h3 style="margin-top: 20px;">Resumen para Decirle al Docente:</h3>
+            <pre id="m1-resultado">Cargando resultados...</pre>
+        </section>
+
+        <!-- ======================================================== -->
+        <!-- MÓDULO 2: AF A EXPRESIÓN REGULAR (ARDEN Y ECUACIONES)    -->
+        <!-- ======================================================== -->
+        <section class="panel" id="panel-1">
+            <div class="panel-header">
+                <div>
+                    <h2>Módulo 2: De Autómata Finito a Expresión Regular</h2>
+                    <p class="panel-desc">Convierte las flechas y estados en una fórmula matemática (Expresión Regular).</p>
+                </div>
+                <span class="badge-info">Lema de Arden y Reglas de Clase</span>
+            </div>
+
+            <div class="callout-didactico">
+                <div class="callout-title">💡 ¿Cómo funciona esto en palabras sencillas?</div>
+                <p>Escribimos una ecuación por cada estado: <em>"Estar aquí = leer una letra y pasar al siguiente estado"</em>. Si un estado tiene un bucle (una flecha que sale de él y regresa a él mismo), aplicamos el <strong>Lema de Arden</strong>: un bucle que se repite equivale al asterisco de Kleene (<code>*</code>). Luego vamos reemplazando unas ecuaciones dentro de otras hasta quedarnos solo con la fórmula del estado inicial.</p>
+            </div>
+
+            <div class="presets-bar">
+                <label><strong>Seleccionar Autómata:</strong></label>
+                <button class="btn-preset" onclick="cargarPresetM2('caso2_anexoA')">Caso 2 (Anexo A: x(xy*y)*)</button>
+                <button class="btn-preset" onclick="cargarPresetM2('m1_afd')">Usar el AFD que convertimos en el Módulo 1</button>
+            </div>
+
+            <div class="card">
+                <div id="m2-info-automata" class="status-box">Autómata cargado: Caso 2 (Anexo A)</div>
+                <button class="action-btn" onclick="ejecutarModulo2()">⚡ Resolver Sistema y Obtener Expresión Regular</button>
+            </div>
+
+            <h3>Paso a Paso con el Nombre de Cada Regla Aplicada:</h3>
+            <pre id="m2-resultado">Haz clic en el botón superior para calcular el sistema de ecuaciones...</pre>
+        </section>
+
+        <!-- ======================================================== -->
+        <!-- MÓDULO 3: VERIFICADOR DE EQUIVALENCIA DE 3 VÍAS           -->
+        <!-- ======================================================== -->
+        <section class="panel" id="panel-2">
+            <div class="panel-header">
+                <div>
+                    <h2>Verificador de Equivalencia Automática (Tres Vías)</h2>
+                    <p class="panel-desc">Comprueba que el AFND original, el AFD resultante y la Expresión Regular digan exactamente lo mismo.</p>
+                </div>
+                <span class="badge-info">AFND ≡ AFD ≡ ER</span>
+            </div>
+
+            <div class="callout-didactico">
+                <div class="callout-title">💡 ¿Qué hace este verificador?</div>
+                <p>Es un juez estricto. Genera <strong>todas las palabras posibles</strong> de hasta longitud 6 (por ejemplo: la vacía λ, <code>a</code>, <code>b</code>, <code>aa</code>, <code>ab</code>, <code>ba</code>, <code>bb</code>... hasta 127 combinaciones). Se las entrega a los tres modelos al mismo tiempo y verifica que si el AFND acepta una palabra, el AFD y la Expresión Regular también la acepten. Si alguno se equivoca, lo reporta de inmediato.</p>
+            </div>
+
+            <div class="card">
+                <div class="grid-inputs" style="max-width: 400px;">
+                    <div>
+                        <label>Longitud máxima de palabras a probar ($n$, mínimo 6):</label>
+                        <input type="number" id="verif-n" value="6" min="1" max="8">
+                    </div>
+                </div>
+
+                <div class="actions-row">
+                    <button class="action-btn" onclick="ejecutarVerificador()">🔍 Probar Cadenas y Verificar Equivalencia</button>
+                </div>
+            </div>
+
+            <h3>Reporte del Juez de Equivalencia:</h3>
+            <pre id="verif-resultado">Configura la longitud y ejecuta la verificación...</pre>
+        </section>
+
+        <!-- ======================================================== -->
+        <!-- MÓDULO 4: SUITE DE PRUEBAS AUTOMÁTICAS (ANEXO A)          -->
+        <!-- ======================================================== -->
+        <section class="panel" id="panel-3">
+            <div class="panel-header">
+                <div>
+                    <h2>Suite de Pruebas Automatizadas (Fase 2)</h2>
+                    <p class="panel-desc">Pruebas unitarias de código puro para demostrar que no hay errores de programación.</p>
+                </div>
+                <span class="badge-success">100% Verificado</span>
+            </div>
+
+            <div class="card">
+                <p>Verifica automáticamente en milisegundos los dos casos obligatorios del examen, el verificador exhaustivo de 127 cadenas y el bonus de transiciones épsilon.</p>
+                <button class="action-btn btn-success" onclick="ejecutarSuitePruebas()">▶ Correr Batería de Pruebas</button>
+            </div>
+
+            <h3>Resultados de la Validación:</h3>
+            <pre id="tests-resultado">Presiona 'Correr Batería de Pruebas' para validar...</pre>
+        </section>
+
+        <!-- ======================================================== -->
+        <!-- MÓDULO 5: GUION PARA SUSTENTAR (EL "MACHETE" OFICIAL)    -->
+        <!-- ======================================================== -->
+        <section class="panel" id="panel-4">
+            <div class="panel-header">
+                <div>
+                    <h2>Guion de Sustentación para Sacar 5.0</h2>
+                    <p class="panel-desc">Palabras exactas, pasos y respuestas a las preguntas del profesor Jefferson Muñoz.</p>
+                </div>
+                <span class="badge-bonus">Tu Salvavidas Oral</span>
+            </div>
+
+            <div class="card guia-card">
+                <h3>Paso 1: Presentación Inicial (30 segundos)</h3>
+                <p><em>"Buenas tardes profesor. Nuestro proyecto es una aplicación gráfica 100% offline construida en JavaScript nativo y Canvas, sin frameworks ni dependencias externas. Resuelve la conversión de AFND a AFD por subconjuntos con estado pozo y bonus épsilon, obtiene la expresión regular por sistemas de ecuaciones con Lema de Arden, y cuenta con un verificador exhaustivo de tres vías."</em></p>
+            </div>
+
+            <div class="card guia-card">
+                <h3>Paso 2: Mostrar el Módulo 1 (AFND a AFD)</h3>
+                <ul>
+                    <li>Haces clic en <strong>"Caso 1 (Anexo A)"</strong> y luego en <strong>"Convertir a AFD"</strong>.</li>
+                    <li><strong>Qué decir:</strong> <em>"Aquí partimos del estado inicial q0. Como desde q0 con la letra 'a' el autómata puede ir a q0 y a q1 al mismo tiempo, el método agrupa esos destinos en un nuevo estado llamado {q0, q1}. Con la letra 'b', como q0 no tiene a dónde ir, el sistema genera automáticamente el <strong>Estado Pozo ∅</strong>, que es el estado sumidero de rechazo. Como q2 era el estado final del AFND, cualquier conjunto que contenga a q2 (como {q2}) se convierte en estado final en el AFD resultante."</em></li>
+                    <li>Muestras los dos Canvas: el original a la izquierda y el determinista a la derecha con doble círculo en los finales.</li>
+                </ul>
+            </div>
+
+            <div class="card guia-card">
+                <h3>Paso 3: Mostrar el Módulo 2 (Autómata a Expresión Regular)</h3>
+                <ul>
+                    <li>Haces clic en el botón verde <strong>"Enviar este AFD al Módulo 2"</strong> o cargas el <strong>"Caso 2 (Anexo A)"</strong> y le das <strong>"Resolver"</strong>.</li>
+                    <li><strong>Qué decir:</strong> <em>"Planteamos una ecuación por cada estado siguiendo la convención de clase: el lenguaje de un estado es igual a la suma de los símbolos que lee multiplicados por los estados a los que llega. Si el estado es final, le sumamos λ. Para resolver los bucles donde un estado se llama a sí mismo, aplicamos el <strong>Lema de Arden ($p = Ap + B \implies p = A^*B$)</strong>. Luego sustituimos los estados intermedios en orden inverso hasta despejar la ecuación del estado inicial q0, obteniendo la expresión regular reducida: <code>x(xy*y)*</code>."</em></li>
+                </ul>
+            </div>
+
+            <div class="card guia-card">
+                <h3>Paso 4: Mostrar el Verificador (El remate perfecto)</h3>
+                <ul>
+                    <li>Vas a la pestaña <strong>"Verificador de Equivalencia"</strong>, dejas $n=6$ y haces clic en <strong>"Probar Cadenas"</strong>.</li>
+                    <li><strong>Qué decir:</strong> <em>"Para comprobar que no hay ningún error matemático, el verificador genera las 127 cadenas posibles del alfabeto hasta tamaño 6. Evalúa cada cadena en el AFND original, en el AFD y en la Expresión Regular. Como puede ver, las 127 cadenas coinciden al 100%, lo que demuestra formalmente que los tres modelos reconocen exactamente el mismo lenguaje."</em></li>
+                </ul>
+            </div>
+
+            <div class="card guia-card">
+                <h3>Preguntas Trampa del Docente y Respuestas:</h3>
+                <div class="faq-item">
+                    <strong>P: "¿Por qué agregaron el estado pozo ∅ si el AFND no lo tenía?"</strong><br>
+                    <span><strong>R:</strong> Porque un AFD por definición matemática debe ser <em>completo</em>: para cada estado y cada símbolo del alfabeto debe existir exactamente una transición. Si en el AFND faltaba un camino, en el AFD debe ir explícitamente al pozo de rechazo.</span>
+                </div>
+                <div class="faq-item">
+                    <strong>P: "¿Qué hace la Clausura-ε (épsilon) del Bonus?"</strong><br>
+                    <span><strong>R:</strong> Es el conjunto de todos los estados alcanzables desde un estado realizando únicamente transiciones vacías (sin consumir ninguna letra). Por eso el estado inicial del AFD es la Clausura-ε del inicial del AFND.</span>
+                </div>
+                <div class="faq-item">
+                    <strong>P: "¿Y si les pido ingresar un autómata nuevo ahora mismo?"</strong><br>
+                    <span><strong>R:</strong> <em>"Con mucho gusto, profesor. Solo ingresamos los estados y el alfabeto aquí en los campos, llenamos la tabla de transiciones y el simulador calcula todo en tiempo real."</em></span>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
